@@ -40,19 +40,44 @@ export const useTaskStore = defineStore('taskStore', {
     },
 
     async addTask(title) {
-      const { data } = await api.post('/tasks', {
-        title,
-        project_id: this.selectedProjectId,
-      })
-      this.tasks.push(data)
-    },
+  const { data } = await api.post('/tasks', {
+    title,
+    project_id: this.selectedProjectId,
+  })
 
-    async updateStatus(taskId, newStatus) {
-      console.log(newStatus)
-      await api.put(`/tasks/${taskId}`, { status: newStatus })
+  // Garante que a task tenha status para reatividade e filtro funcionarem
+  if (!data.status) {
+    data.status = 'pendente'
+  }
+
+  this.tasks = [...this.tasks, data]
+},
+
+    // async updateStatus(taskId, newStatus) {
+    //   const task = this.tasks.find(t => t.id === taskId)
+    //   if(!task) return 
+
+    //   try {
+    //     await api.put(`/tasks/${taskId}`, { 
+    //       title: task.title,
+    //       status: newStatus,
+    //       project_id: task.project_id,
+    //     })
+
+    //     task.status = newStatus 
+    //   } catch (error) {
+    //     console.error('Erro ao atualizar tarefa:', error.response.data)
+    //   }
+    // },
+
+    async updateStatus(taskId, status) {
       const task = this.tasks.find(t => t.id === taskId)
-      if (task) task.status = newStatus
-    },
+
+      const { data } = await api.put(`/tasks/${taskId}`, { title: task.title, status, project_id: task.project_id  })
+      // Atualiza localmente para reatividade
+      const index = this.tasks.findIndex(t => t.id === taskId)
+      if (index !== -1) this.tasks[index] = data
+},
 
     async deleteTask(taskId) {
       await api.delete(`/tasks/${taskId}`)
